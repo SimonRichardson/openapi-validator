@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/pkg/errors"
@@ -10,7 +9,6 @@ import (
 	"github.com/spoke-d/clui/commands"
 	"github.com/spoke-d/clui/flagset"
 	"github.com/spoke-d/task/group"
-	"gopkg.in/yaml.v2"
 )
 
 type validateCmd struct {
@@ -62,17 +60,12 @@ func (v *validateCmd) Init(args []string, ctx commands.CommandContext) error {
 
 func (v *validateCmd) Run(g *group.Group) {
 	g.Add(func() error {
-		data, err := ioutil.ReadFile(v.file)
+		loader := openapi3.NewSwaggerLoader()
+		swagger, err := loader.LoadSwaggerFromFile(v.file)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		var swagger openapi3.Swagger
-		if err := yaml.Unmarshal(data, &swagger); err != nil {
-			return errors.WithStack(err)
-		}
-
-		loader := openapi3.NewSwaggerLoader()
 		return swagger.Validate(loader.Context)
 	}, commands.Disguard)
 }
